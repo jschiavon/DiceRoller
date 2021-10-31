@@ -1,4 +1,4 @@
-#include "headers/diceroller.h"
+#include "include/diceroller.h"
 #include "ui_diceroller.h"
 
 DiceRoller::DiceRoller(QWidget *parent)

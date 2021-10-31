@@ -18,8 +18,8 @@ set(PROJECT_SOURCES
         src/main.cpp
         src/diceroller.cpp
         src/roller.cpp
-        headers/diceroller.h
-        headers/roller.h
+        include/diceroller.h
+        include/roller.h
         src/diceroller.ui
         resources/diceroller.qrc
 )

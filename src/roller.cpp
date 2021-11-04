@@ -10,7 +10,7 @@ Roller::Roller()
    reroll = false;
    std::random_device rd;
    _generator = std::mt19937_64(rd());
-   _uniform = std::uniform_int_distribution<>(1, die);
+   _roller = std::uniform_int_distribution<>(1, die);
 }
 
 Roller::Roller(int r, int n, int d, int m)
@@ -21,7 +21,7 @@ Roller::Roller(int r, int n, int d, int m)
     modifier = m;
     std::random_device rd;
     _generator = std::mt19937_64(rd());
-    _uniform = std::uniform_int_distribution<>(1, die);
+    _roller = std::uniform_int_distribution<>(1, die);
 }
 
 Roller::Roller(std::string rolls)
@@ -54,12 +54,30 @@ Roller::Roller(std::string rolls)
     }
     std::random_device rd;
     _generator = std::mt19937_64(rd());
-    _uniform = std::uniform_int_distribution<>(1, die);
+    _roller = std::uniform_int_distribution<>(1, die);
 }
 
 
 // Private methods
+int Roller::roll_boonbane(int b)
+{
+    int rolled;
+    int result = 0;
+    for (int i=0; i<b; i++){
+        rolled = _boonbane(_generator);
+        if (rolled > result) {result = rolled;}
+    }
+    return result;
+}
 
+double Roller::exp_boonbane(int b)
+{
+    double res = 0.;
+    for (int i=1; i<7; i++){
+        res += ((pow(i, b) - pow(i-1, b)) / pow(6., b)) * i;
+    }
+    return res;
+}
 
 // Public method
 std::vector<int> Roller::roll()
@@ -68,9 +86,11 @@ std::vector<int> Roller::roll()
     std::vector<int> results;
     for (int i=0; i<repeat; i++){
         results.push_back(modifier);
+        if (boon > 0){results[i] += roll_boonbane(boon);}
+        if (bane > 0){results[i] -= roll_boonbane(bane);}
         for (int j=0; j<number; j++){
-            rolled = _uniform(_generator);
-            if ((rolled == 1) && (reroll)) rolled = _uniform(_generator);
+            rolled = _roller(_generator);
+            if ((rolled == 1) && (reroll)) rolled = _roller(_generator);
             results[i] += rolled;
         }
     }
@@ -87,6 +107,9 @@ double Roller::expectation()
     }
     res *= number;
     res += modifier;
+    if (boon > 0){res += exp_boonbane(boon);}
+    if (bane > 0){res -= exp_boonbane(bane);}
+
     return res;
 }
 
@@ -113,6 +136,14 @@ void Roller::print_expectation()
     std::cout << "Expect: " << expectation() << std::endl;
 }
 
+void Roller::set_boon_bane(int bo=0, int ba=0)
+{
+    int net_boon = bo - ba;
+    if (net_boon == 0) {boon = 0; bane = 0;}
+    else if (net_boon > 0) {boon = bo - ba; bane = 0;}
+    else if (net_boon < 0) {boon = 0; bane = ba - bo;}
+}
+
 // Overloaded operator
 std::ostream& operator<<(std::ostream& os, const Roller& rd)
 {
@@ -122,7 +153,9 @@ std::ostream& operator<<(std::ostream& os, const Roller& rd)
         }
 
         os << rd.number << " " << rd.die
-                << "-sided dices";
+                << "-sided ";
+        if (rd.number > 1) {os << "dices";}
+        else {os << "die";}
 
         if (rd.modifier > 0){
             os <<  " plus " << rd.modifier;

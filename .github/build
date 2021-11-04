@@ -1,5 +1,5 @@
 #!/bin/bash
 
-cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+cmake -B build/
 
-cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+cmake --build build/

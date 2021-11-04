@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>367</width>
-    <height>324</height>
+    <height>328</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,7 +34,7 @@
         <item>
          <widget class="QLabel" name="stringLabel">
           <property name="text">
-           <string>Dice string</string>
+           <string>Insert roll string here:</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -50,7 +50,7 @@
            <set>Qt::AlignCenter</set>
           </property>
           <property name="placeholderText">
-           <string>Insert dice string</string>
+           <string>Default 1d6</string>
           </property>
          </widget>
         </item>

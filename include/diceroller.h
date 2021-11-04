@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QClipboard>
+#include <QMessageBox>
 #include "roller.h"
 
 QT_BEGIN_NAMESPACE
@@ -25,6 +26,8 @@ private slots:
     void on_copyButton_clicked();
 
     void on_Rollstring_returnPressed();
+
+    void on_helpButton_clicked();
 
 private:
     Ui::DiceRoller *ui;

@@ -63,3 +63,21 @@ void DiceRoller::on_copyButton_clicked()
 
 
 
+void DiceRoller::on_helpButton_clicked()
+{
+    QMessageBox msgBox;
+    msgBox.setText("The format for the rollstring is as follows\n\n"
+                   "(not mandatory options are between square brackets):\n\n"
+                   "### [Rx]NdD[+M]"
+                   "where:\n\n"
+                   "* **R** : Number of *repetitions*. If present, repeat R times the roll\n"
+                   "* **N** : *Number* of dice to roll\n"
+                   "* **D** : Number of *sides* of the dice to roll\n"
+                   "* **M** : *Modifier*. If present, add M to the result of rolling\n\n"
+                   "*Example*: 3x2d20+2 roll for 3 times 2 20-sided dice and adds 2 to each result.\n\n"
+                   "The options _Reroll 1s_ and _expectation_ do as they say: the first allows to reroll (once)"
+                   "each result of 1 that appears in the roll, "
+                   "while the second does not roll at all but simply returns the expected result obtained.");
+    msgBox.exec();
+}
+

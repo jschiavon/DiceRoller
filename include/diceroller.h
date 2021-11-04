@@ -19,7 +19,9 @@ public:
     ~DiceRoller();
 
 private slots:
+    void process_options(Roller &);
     void execute_roll();
+    void execute_expectation();
 
     void on_rollButton_clicked();
 
@@ -28,6 +30,8 @@ private slots:
     void on_Rollstring_returnPressed();
 
     void on_helpButton_clicked();
+
+    void on_expectationButton_clicked();
 
 private:
     Ui::DiceRoller *ui;

@@ -1,41 +1,90 @@
-on: release
+on:
+  push:
+    tags:
+      - release-*
+
 name: Handle Release
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
  
 jobs:
-  upload:
-    name: Upload
-    
+  create_release:
+    name: Create release
     runs-on: ubuntu-latest
-
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-    - name: checkout
-      uses: actions/checkout@v2
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+  build_assets:
+    name: Build assets
+    needs: create_release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        include:
+        - os: macos-latest
+          host: mac
+          sysname: Darwin
+          
+        - os: ubuntu-latest
+          host: linux
+          sysname: Linux
+          
+        - os: windows-latest
+          host: windows
+          sysname: Windows
     
-    - name: Cache Qt
-      id: cache-qt
-      uses: actions/cache@v1  # not v2!
-      with:
-        path: ../Qt
-        key: ${{ runner.os }}-QtCache
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+      
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v1  # not v2!
+        with:
+            path: ../Qt
+            key: ${{ runner.os }}-QtCache
 
-    - name: Install Qt
-      uses: jurplel/install-qt-action@v2
-      with:
-        cached: ${{ steps.cache-qt.outputs.cache-hit }}
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          cached: ${{ steps.cache-qt.outputs.cache-hit }}
+          host: ${{matrix.host}}
+          
+      - name: Configure CMake
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        
+      - name: Upload release assets Unix
+        if: matrix.os != 'windows-latest'
+        uses: alexellis/upload-assets@0.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          asset_paths: '["./build/DiceRoller-*"]'
+      
+      - name: Upload release assets Win
+        if: matrix.os == 'windows-latest'
+        uses: alexellis/upload-assets@0.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          asset_paths: '["./build/Release/DiceRoller-*"]'
+        
 
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
-    
-    - name: Upload
-      uses: skx/github-action-publish-binaries@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        args: build/DiceRoller-*
+  

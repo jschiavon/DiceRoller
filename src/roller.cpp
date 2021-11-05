@@ -3,58 +3,51 @@
 // Constructors
 Roller::Roller()
 {
-   repeat = 1;
-   number = 1;
-   die = 6;
-   modifier = 0;
-   reroll = false;
    std::random_device rd;
    _generator = std::mt19937_64(rd());
-   _roller = std::uniform_int_distribution<>(1, die);
+   _roller = std::uniform_int_distribution<>(1, base_die.die);
 }
 
 Roller::Roller(int r, int n, int d, int m)
 {
-    repeat = r;
-    number = n;
-    die = d;
-    modifier = m;
+    base_die.repeat = r;
+    base_die.number = n;
+    base_die.die = d;
+    base_die.modifier = m;
     std::random_device rd;
     _generator = std::mt19937_64(rd());
-    _roller = std::uniform_int_distribution<>(1, die);
+    _roller = std::uniform_int_distribution<>(1, base_die.die);
 }
 
 Roller::Roller(std::string rolls)
 {
-    if (rolls == std::string("")){
-        repeat = 1;
-        number = 1;
-        die = 6;
-        modifier = 0;
-    } else {
+    std::string::iterator end_pos = std::remove(rolls.begin(), rolls.end(), ' ');
+    rolls.erase(end_pos, rolls.end());
+
+    if (rolls != std::string("")){
         auto pos = rolls.find("x");
         if (pos != std::string::npos){
-            repeat = std::stoi(rolls.substr(0, pos));
+            base_die.repeat = std::stoi(rolls.substr(0, pos));
             rolls = rolls.substr(pos + std::string("x").length());
-        } else {repeat = 1;}
+        } else {base_die.repeat = 1;}
 
         pos = rolls.find("+");
         if (pos != std::string::npos){
-            modifier = std::stoi(rolls.substr(pos, std::string::npos));
+            base_die.modifier = std::stoi(rolls.substr(pos, std::string::npos));
             rolls = rolls.substr(0, pos);
-        } else {modifier = 0;}
+        } else {base_die.modifier = 0;}
 
         pos = rolls.find("d");
         if (pos != std::string::npos){
-            number = std::stoi(rolls.substr(0, pos));
+            base_die.number = std::stoi(rolls.substr(0, pos));
             rolls = rolls.substr(pos + std::string("x").length());
-        } else {number = 1;}
+        } else {base_die.number = 1;}
 
-        die = std::stoi(rolls);
+        base_die.die = std::stoi(rolls);
     }
     std::random_device rd;
     _generator = std::mt19937_64(rd());
-    _roller = std::uniform_int_distribution<>(1, die);
+    _roller = std::uniform_int_distribution<>(1, base_die.die);
 }
 
 
@@ -84,13 +77,21 @@ std::vector<int> Roller::roll()
 {
     int rolled;
     std::vector<int> results;
-    for (int i=0; i<repeat; i++){
-        results.push_back(modifier);
+    for (int i=0; i<base_die.repeat; i++){
+        results.push_back(base_die.modifier);
         if (boon > 0){results[i] += roll_boonbane(boon);}
         if (bane > 0){results[i] -= roll_boonbane(bane);}
-        for (int j=0; j<number; j++){
+        for (int j=0; j<base_die.number; j++){
             rolled = _roller(_generator);
             if ((rolled == 1) && (reroll)) rolled = _roller(_generator);
+            if (adv){
+                int r = _roller(_generator);
+                if (r > rolled) rolled = r;
+            }
+            if (dis){
+                int r = _roller(_generator);
+                if (r < rolled) rolled = r;
+            }
             results[i] += rolled;
         }
     }
@@ -101,14 +102,26 @@ double Roller::expectation()
 {
     double res;
     if (reroll) {
-        res = 0.5 * (die + 2.) - 1. / (2. * die);
+        res = 0.5 * (base_die.die + 2.) - 1. / (2. * base_die.die);
+    } else if (adv){
+        res = 0;
+        for (int k = 1; k <= base_die.die; k++){
+            res += ((pow(k, 2) - pow(k-1, 2)) / pow(base_die.die, 2)) * k;
+        }
+    } else if (dis){
+        res = 0;
+        for (int k = 1; k <= base_die.die; k++){
+            res += ((pow(base_die.die - k + 1, 2) - pow(base_die.die - k, 2)) / pow(base_die.die, 2)) * k;
+        }
     } else {
-        res = 0.5 * (die + 1.);
+        res = 0.5 * (base_die.die + 1.);
     }
-    res *= number;
-    res += modifier;
+
     if (boon > 0){res += exp_boonbane(boon);}
     if (bane > 0){res -= exp_boonbane(bane);}
+
+    res *= base_die.number;
+    res += base_die.modifier;
 
     return res;
 }
@@ -144,21 +157,29 @@ void Roller::set_boon_bane(int bo=0, int ba=0)
     else if (net_boon < 0) {boon = 0; bane = ba - bo;}
 }
 
+void Roller::set_advantages(bool a, bool d)
+{
+    if (a != d){
+        adv = a;
+        dis = d;
+    }
+}
+
 // Overloaded operator
 std::ostream& operator<<(std::ostream& os, const Roller& rd)
 {
         os << "Roll " ;
-        if (rd.repeat > 1){
-            os << rd.repeat << " times ";
+        if (rd.base_die.repeat > 1){
+            os << rd.base_die.repeat << " times ";
         }
 
-        os << rd.number << " " << rd.die
+        os << rd.base_die.number << " " << rd.base_die.die
                 << "-sided ";
-        if (rd.number > 1) {os << "dices";}
+        if (rd.base_die.number > 1) {os << "dices";}
         else {os << "die";}
 
-        if (rd.modifier > 0){
-            os <<  " plus " << rd.modifier;
+        if (rd.base_die.modifier > 0){
+            os <<  " plus " << rd.base_die.modifier;
         }
 
         if (rd.reroll){

@@ -16,15 +16,13 @@ DiceRoller::~DiceRoller()
 
 void DiceRoller::process_options(Roller& roll)
 {
-    if (ui->rerollButton->isChecked()){
-        roll.activate_reroll();
-    }
+    roll.set_reroll(ui->rerollButton->isChecked());
 
-    if (ui->boonBox->value() > 0){
-        roll.set_boon_bane(ui->boonBox->value(), ui->baneBox->value());
-    }
+    roll.set_boon_bane(ui->boonBox->value(), ui->baneBox->value());
 
+    roll.set_advantages(ui->advBox->isChecked(), ui->disBox->isChecked());
 }
+
 
 void DiceRoller::execute_roll()
 {
@@ -67,6 +65,7 @@ void DiceRoller::on_rollButton_clicked()
     DiceRoller::execute_roll();
 }
 
+
 void DiceRoller::on_Rollstring_returnPressed()
 {
     DiceRoller::execute_roll();
@@ -79,29 +78,28 @@ void DiceRoller::on_expectationButton_clicked()
 }
 
 
-
 void DiceRoller::on_copyButton_clicked()
 {
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->setText(ui->result->toPlainText());
 }
 
+
 void DiceRoller::on_helpButton_clicked()
 {
     QMessageBox msgBox;
     msgBox.setTextFormat(Qt::MarkdownText);
-    msgBox.setText("The format for the rollstring is as follows "
-                   "(not mandatory options are between square brackets):\n\n"
-                   "### [Rx]NdD[+M]\n"
-                   "where:\n"
-                   "* **R** : Number of _repetitions_. If present, repeat R times the roll\n"
-                   "* **N** : _Number_ of dice to roll\n"
-                   "* **D** : Number of _sides_ of the dice to roll\n"
-                   "* **M** : _Modifier_. If present, add M to the result of rolling\n\n"
-                   "*Example*: 3x2d20+2 roll for 3 times 2 20-sided dice and adds 2 to each result.\n\n"
-                   "The options _Reroll 1s_ and _expectation_ do as they say: the first allows to reroll (once)"
-                   "each result of 1 that appears in the roll, "
-                   "while the second does not roll at all but simply returns the expected result obtained.");
+    QFile *file = new QFile (":/help.md");
+    QString help = "";
+    if (file->open (QIODevice::ReadOnly) == true)
+    {
+        help = QString(file->readAll());
+        file->close ();
+    }
+
+    msgBox.setText(help);
+    msgBox.setWindowTitle("Help");
+
     msgBox.exec();
 }
 

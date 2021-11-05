@@ -6,18 +6,24 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 class Roller{
 
   private:
     // Attributes
-    int repeat;
-    int number;
-    int die;
-    int modifier;
+    struct DIE{
+        int repeat = 1;
+        int number = 1;
+        int die = 6;
+        int modifier = 0;
+    };
+    DIE base_die;
     int boon = 0;
     int bane = 0;
     bool reroll = false;
+    bool adv = false;
+    bool dis = false;
 
     std::mt19937_64 _generator;
     std::uniform_int_distribution<> _roller;
@@ -35,7 +41,8 @@ class Roller{
     Roller(std::string str);
 
     // Methods
-    void activate_reroll() {reroll = true;};
+    void set_reroll(bool rer) {reroll = rer;};
+    void set_advantages(bool, bool);
     void set_boon_bane(int, int);
     std::vector<int> roll();
     double expectation();

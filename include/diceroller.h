@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <QClipboard>
 #include <QMessageBox>
+#include <QFile>
+#include <QString>
 #include "roller.h"
 
 QT_BEGIN_NAMESPACE

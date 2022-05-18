@@ -72,11 +72,13 @@ jobs:
         
       - name: Upload release assets Unix
         if: matrix.os != 'windows-latest'
-        uses: alexellis/upload-assets@0.3.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: svenstaro/upload-release-action@v2
         with:
-          asset_paths: '["./build/DiceRoller-*"]'
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/${{ matrix.artifact_name }}-*
+          asset_name: ${{ matrix.asset_name }}
+          tag: ${{ github.ref }}
+          
       
       - name: Upload release assets Win
         if: matrix.os == 'windows-latest'
